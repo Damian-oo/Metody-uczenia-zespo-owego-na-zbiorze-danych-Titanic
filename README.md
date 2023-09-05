@@ -1,1 +1,1 @@
-# Metody-uczenia-zespo-owego-na-zbiorze-danych-Titanic
+# Metody-uczenia-zespolowego-na-zbiorze-danych-Titanic
