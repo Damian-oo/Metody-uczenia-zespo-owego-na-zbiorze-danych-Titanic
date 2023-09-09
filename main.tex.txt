@@ -1,0 +1,647 @@
+\documentclass[12pt, a4paper]{article}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % dodatkowe pakiety LaTeX'a
+\usepackage[OT4]{polski}
+\usepackage[utf8]{inputenc}
+\usepackage[top=2.5cm, bottom=2.5cm, left=2cm, right=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[colorlinks=true, linkcolor=blue]{hyperref}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{bbm}
+\usepackage{lipsum}
+\newcommand{\kb}[1]{\textcolor{red}{#1}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ustawienia globalne
+\renewcommand\lstlistingname{Kod źródłowy}
+\renewcommand\lstlistlistingname{Kod źródłowy}
+\DeclareMathOperator*{\argmax}{argmax} % thin space, limits underneath in displays
+
+\usepackage{xcolor}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeorange}{rgb}{1,0.49,0}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.96}
+\definecolor{codeblue}{rgb}{0,0,0.8}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codeblue},
+    keywordstyle=\color{codeorange},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codegreen},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    xleftmargin=10pt,
+}
+
+\lstset{style=mystyle}
+
+
+\begin{document}
+%\SweaveOpts{concordance=TRUE}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % strona tytulowa
+\title{Analiza eksploracyjna oraz klasyfikacja przy użyciu metod uczenia zespołowego na zbiorze danych Titanic}
+\author{Damian Lewańczyk}
+\date{}
+\maketitle
+\tableofcontents
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %
+
+
+\section{Analiza eksploracyjna}
+
+\subsection{Opis danych}
+%
+
+Nasz zbiór danych \texttt{Titanic} złożony jest z $1309$ obserwacji - pasażerów słynnego statku. Zawiera $14$ różnych zmiennych objaśniających opisujących poszczególne osoby oraz zmienną objaśnianą \texttt{survived} - opisuje ona czy dany człowiek przeżył (\texttt{survived} $= 1$) czy nie (\texttt{survived} $= 0$).  Przed analizą danych przedstawimy krótki opis każdej zmiennej, przedstawiając jej nazwę oraz typ:
+
+\begin{itemize}
+\item \textbf{pclass} (zmienna jakościowa, przyjmuje $3$ różne wartości) -  określa klasę biletu pasażera
+\item \textbf{survived} (zmienna jakościowa, przyjmuje $2$ różne wartości) - zmienna objaśniana, opisuje czy dany pasażer przeżył katastrofę czy nie
+\item \textbf{name} (zmienna jakościowa, przyjmuje $1307$ różnych wartości) - imię i nazwisko pasażera
+\item \textbf{sex} (zmienna jakościowa, przyjmuje $2$ różne wartości) - płeć pasażera
+\item \textbf{age} (zmienna ilościowa, przyjmuje wartości w zakresie od $0.1667$ do $80$) - wiek osoby
+\item \textbf{sibsp} (zmienna jakościowa, przyjmuje $7$ różnych wartości) - liczba rodzeństwa i współmałżonków danej osoby, którzy też znajdują się na pokładzie statku
+\item \textbf{parch} (zmienna jakościowa, przyjmuje $8$ różnych wartości) - liczba dzieci i rodziców danej osoby znajdujących się na statku 
+\item \textbf{ticket} (zmienna jakościowa, przyjmuje $929$ różnych wartości) - numer biletu
+\item \textbf{fare} (zmienna ilościowa typu ciągłego, przyjmuje wartości w zakresie od $0$ do $512.3292$) - opłata za podróż
+\item \textbf{cabin} (zmienna jakościowa, przyjmuje $186$ różnych wartości) - kabina danego pasażera
+\item \textbf{embarked} (zmienna jakościowa, przyjmuje $3$ różne wartości) - port z którego wyruszył dany pasażer: C = Cherbourg; Q = Queenstown; S = Southampton
+\item \textbf{boat} (zmienna jakościowa, przyjmuje $27$ różnych wartości) - numer łodzi, jeśli pasażer przeżył
+\item \textbf{body} (zmienna jakościowa, przyjmuje $121$ różnych wartości) - numer ciała, jeśli pasażer nie przeżył, a ciało odnaleziono
+\item \textbf{home.dest} (zmienna jakościowa, przyjmuje $369$ różnych wartości) - miasto do którego udawał się pasażer
+
+
+\end{itemize}
+
+Dodatkowo, w tabelach \ref{dataset_1} i \ref{dataset_2} przedstawione jest pierwsze $10$ wierszy zbioru danych, podzielonych na dwie części po $7$ cech.
+
+
+\begin{table}[H]
+\centering
+\caption{Pierwsze 10 wierszy zbioru danych Titanic, kolumny~1-7}
+\begin{tabular}{|r|r|p{6.5cm}|l|l|r|r|}
+\toprule
+\hline
+ pclass &  survived &                                            name &    sex &    age &  sibsp &  parch \\ \hline
+\midrule
+      1 &         1 &                   ALLEN, MISS. ELISABETH WALTON & female &     29 &      0 &      0 \\
+      1 &         1 &                  ALLISON, MASTER. HUDSON TREVOR &   male & 0,9167 &      1 &      2 \\
+      1 &         0 &                    ALLISON, MISS. HELEN LORAINE & female &      2 &      1 &      2 \\
+      1 &         0 &            ALLISON, MR. HUDSON JOSHUA CREIGHTON &   male &     30 &      1 &      2 \\
+      1 &         0 & ALLISON, MRS. HUDSON J C (BESSIE WALDO DANIELS) & female &     25 &      1 &      2 \\
+      1 &         1 &                             ANDERSON, MR. HARRY &   male &     48 &      0 &      0 \\
+      1 &         1 &               ANDREWS, MISS. KORNELIA THEODOSIA & female &     63 &      1 &      0 \\
+      1 &         0 &                          ANDREWS, MR. THOMAS JR &   male &     39 &      0 &      0 \\
+      1 &         1 &   APPLETON, MRS. EDWARD DALE (CHARLOTTE LAMSON) & female &     53 &      2 &      0 \\
+      1 &         0 &                         ARTAGAVEYTIA, MR. RAMON &   male &     71 &      0 &      0 \\
+      \hline
+\bottomrule
+\end{tabular}
+\label{dataset_1}
+\end{table}
+
+
+
+\begin{table}[H]
+\centering
+\caption{Pierwsze 10 wierszy zbioru danych Titanic, kolumny~8-14}
+\begin{tabular}{|l|l|l|l|l|r|p{5cm}|}
+\toprule
+\hline
+  ticket &     fare &   cabin & embarked & boat &  body &                       home.dest \\ \hline
+\midrule
+   24160 & 211,3375 &      B5 &        S &    2 &   NaN &                    St Louis, MO \\
+  113781 & 151,5500 & C22 C26 &        S &   11 &   NaN & Montreal, PQ / Chesterville, ON \\
+  113781 & 151,5500 & C22 C26 &        S &  NaN &   NaN & Montreal, PQ / Chesterville, ON \\
+  113781 & 151,5500 & C22 C26 &        S &  NaN & 135.0 & Montreal, PQ / Chesterville, ON \\
+  113781 & 151,5500 & C22 C26 &        S &  NaN &   NaN & Montreal, PQ / Chesterville, ON \\
+   19952 &  26,5500 &     E12 &        S &    3 &   NaN &                    New York, NY \\
+   13502 &  77,9583 &      D7 &        S &   10 &   NaN &                      Hudson, NY \\
+  112050 &   0,0000 &     A36 &        S &  NaN &   NaN &                     Belfast, NI \\
+   11769 &  51,4792 &    C101 &        S &    D &   NaN &             Bayside, Queens, NY \\
+PC 17609 &  49,5042 &     NaN &        C &  NaN &  22.0 &             Montevideo, Uruguay \\
+\hline
+\bottomrule
+\end{tabular}
+\label{dataset_2}
+\end{table}
+
+
+
+
+
+
+
+
+
+
+
+%---------------------------------------------------------------------------------------------------
+\subsection{Szukanie i uzupełnianie brakujących wartości}
+%---------------------------------------------------------------------------------------------------
+
+Użyjemy metody \texttt{isnull()} dla obiektu klasy \textbf{pandas.DataFrame}, aby sprawdzić ile wartości brakujących ma każda zmienna oraz jaki jest to odsetek całości. W~kodzie źródłowym ~\ref{lst:code1} podane zostały bezwzględne liczby wartości brakujących dla poszczególnych zmiennych, a~w~kodzie źródłowym \ref{lst:code2} procentowy udział tych wartości w stosunku do wszystkich wierszy.
+
+\begin{lstlisting}[language=Python, caption={Liczba wartości brakujących dla każdej cechy}, label={lst:code1}, mathescape=true, breaklines=true]
+Out[103]: 
+pclass          0
+survived        0
+name            0
+sex             0
+age           263
+sibsp           0
+parch           0
+ticket          0
+fare            1
+cabin        1014
+embarked        2
+boat          823
+body         1188
+home.dest     564
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={Odsetek wartości brakujących dla każdej cechy}, label={lst:code2}, mathescape=true, breaklines=true]
+Out[113]: 
+pclass        0.0
+survived      0.0
+name          0.0
+sex           0.0
+age          20.1
+sibsp         0.0
+parch         0.0
+ticket        0.0
+fare          0.1
+cabin        77.5
+embarked      0.2
+boat         62.9
+body         90.8
+home.dest    43.1
+
+\end{lstlisting}
+
+\subsubsection{Wytypowanie i usuwanie niepotrzebnych zmiennych}
+Widzimy powyżej, że zmienne \texttt{cabin}, \texttt{boat}, \texttt{body} i \texttt{home.dest} mają najwięcej brakujących wartości, każda z nich ponad $40\%$, tym samym usuwamy je z modelu. Ponadto, usuwamy zmienne z imieniem i nazwiskiem oraz numerem biletu pasażera, ponieważ oczywiście nie mają one wpływu na potencjalne przeżycie danej osoby (te zmienne jakościowe, czyli \texttt{name} i \texttt{ticket} mają bardzo dużo kategorii). W celu usunięcia zmiennych posłużymy się metodą \texttt{drop()} dla obiektu klasy \textbf{pandas.DataFrame}, co widzimy w kodzie źródłowym \ref{lst:code3}. Jednakże, przed usunięciem zmiennej \texttt{name}, dodamy na jej bazie zmodyfikowaną wersję - zmienną \texttt{initial}, która odpowiada tytułowi danej osoby ("Mr.", "Mrs." itd.), jednakże grupujemy tą zmienną na $5$ kategorii: "Master", "Miss", "Mr", "Mrs" i "Other". Zmienną \texttt{initial} wykorzystamy tylko i wyłącznie w celu trafniejszemu przypisaniu wartości brakujących zmiennej \texttt{age}, a później ją usuniemy.
+
+\begin{lstlisting}[language=Python, caption={Usuwanie niepotrzebnych zmiennych z modelu}, label={lst:code3}, mathescape=true, breaklines=true]
+df_titanic['initial']=0
+df_titanic["initial"] = df_titanic["name"].apply(lambda st: st[st.find(",")+2:st.find(".")])
+df_titanic['initial'].replace(['Mlle','Mme','Ms','Dr','Major','Lady','Countess', 'Jonkheer','Col','Rev','Capt','Sir','Don'],['Miss','Miss','Miss','Mr','Mr','Mrs','Mrs','Other','Other','Other','Mr','Mr','Mr'],inplace=True)
+df_titanic = df_titanic.drop(["cabin", "boat", "body", "home.dest", "name", "ticket"], axis=1)
+\end{lstlisting}
+\par
+
+\subsubsection{Przypisanie typów zmiennych}
+
+Przed uzupełnieniem wartości brakujących, musimy przypisać zmiennym \texttt{age} i \texttt{fare} typ numeryczny. Zrobimy to za pomocą funkcji \texttt{pandas.to\_numeric()}.
+\begin{lstlisting}[language=Python, caption={Przypisanie typu zmiennym ilościowym}, label={lst:code4}, mathescape=true, breaklines=true]
+df_titanic['age'] = df_titanic['age'].dropna().str.replace(",", ".")
+df_titanic['fare'] = df_titanic['fare'].dropna().str.replace(",", ".")
+df_titanic[['age', 'fare']] = df_titanic[['age','fare']].apply(pd.to_numeric)
+\end{lstlisting}
+
+\subsubsection{Wypełnianie brakujących wartości}
+Jeśli chodzi o brakujące wartości zmiennych \texttt{age}, \texttt{fare} oraz \texttt{embarked}, wypełnimy brakujące wartości w następujący sposób:
+\\ - przy zmiennej jakościowej \texttt{embarked}, wartości brakujące zastąpimy najczęściej występującą wartością, czyli "S"
+\\ - jedną brakującą wartość zmiennej ilościowej \texttt{fare} zastąpimy średnią z postałych wartości
+\\ - w zmiennej \texttt{age} wartości brakujące zastąpimy średnimi wartościami dla danej grupy zmiennej \texttt{initial}
+\\ Na samym końcu usuwamy niepotrzebną już nam zmienną \texttt{initial}.
+\begin{lstlisting}[language=Python, caption={Przypisanie typu zmiennym ilościowym}, label={lst:code4}, mathescape=true, breaklines=true]
+df_titanic["embarked"] = df_titanic["embarked"].fillna(df_titanic['embarked'].mode())
+df_titanic["fare"] = df_titanic["fare"].fillna(df_titanic['fare'].mean())
+df_titanic['age'] = df_titanic['age'].fillna(df_titanic.groupby('initial')['age'].transform('mean'))
+df_titanic = df_titanic.drop("embarked", axis=1)
+
+\end{lstlisting}
+
+Ostatecznie w naszym modelu zostało $7$ zmiennych objaśniających: $5$ jakościowych i $2$ ilościowe oraz jakościowa zmienna objaśniana \texttt{survived}.
+
+\begin{table}[H]
+\centering
+\caption{Pierwsze 5 wierszy zbioru danych Titanic po modyfikacjach}
+\begin{tabular}{|r|r|l|l|r|r|l|l|}
+\toprule
+\hline
+ survived &  pclass  &    sex &    age &  sibsp &  parch &     fare & embarked \\ \hline
+\midrule
+        1 &       1 &   female &     29 &      0 &      0 & 211,3375 &        S \\
+        1 &       1 &    male & 0,9167 &      1 &      2 & 151,5500 &        S \\
+        0 &       1 &     female &      2 &      1 &      2 & 151,5500 &        S \\
+        0 &       1 &       male &     30 &      1 &      2 & 151,5500 &        S \\
+        0 &       1 &    female &     25 &      1 &      2 & 151,5500 &        S \\
+\hline
+\bottomrule
+\end{tabular}
+\label{dataset_3}
+\end{table}
+
+
+
+\subsection{Wizualizacja danych}
+
+W tym podrozdziale przeprowadzona zostanie wizualizacja danych. Na początku, zaprezentujemy wykresy słupkowe dla zmiennych jakościowych, które przedstawią częstości występowania poszczególnych kategorii dla każdej zmiennej typu factor. Zrobimy to za pomocą funkcji \texttt{countplot} \cite{countplot} z pakietu \textbf{seaborn}, a wyniki przedstawione są na rysunku \ref{fig:Barplots_1}.
+                
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=0.97]
+{Images/Barplots.jpg}}
+\caption{Częstotliwości występowania zmiennych jakościowych}
+\label{fig:Barplots_1}
+\end{figure}
+
+Jak widzimy powyżej, rozkłady kategorii poszczególnych cech jakościowych oczywiście różnią się od siebie. Możemy rozróżnić trzy dwuelementowe grupy: zmienne \texttt{survived} i \texttt{sex}, mające po $2$ kategorie, mają najbardziej równomierne rozkłady, ale wciąż z wyraźną przewagą występowania jednej kategorii: wartość \textbf{0} dla zmiennej \texttt{survived} oraz \textbf{male} dla zmiennej \texttt{sex} - kategorie te to około $60\%$ wszystkich wartości odpowiednich zmiennych. Następnie, zmienne \texttt{pclass} i \texttt{embarked}, mające po $3$ kategorie, mają jedną wartość występującą dużo częściej od pozostałych: \texttt{pclass}$=$\textbf{3} i \texttt{embarked}$=$\textbf{S}. Natomiast zmienne \texttt{sibsp} i \texttt{parch} mają więcej kategorii - odpowiednio $7$ i $8$. Również i w wypadku tych zmiennych widzimy jedną wartość wyraźnie dominującą jeśli chodzi o częstotliwość występowania, jest to $0$ dla obu tych zmiennych.
+\par
+
+Poniżej przedstawione zostały histogramy dla zmiennych numerycznych. Stworzone zostały za pomocą metody \texttt{.hist()} \cite{.hist} dla obiektu klasy \textbf{matplotlib.Axis}. Rezultaty przedstawione zostały na rysunku \ref{fig:Histograms}.
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=1]
+{Images/Histograms.jpg}}
+\caption{Histogramy dla zmiennych ilościowych}
+\label{fig:Histograms}
+\end{figure}
+
+Jak możemy zaobserwować powyżej, zmienne \texttt{age} i \texttt{fare} mają różnie wyglądające rozkłady wartości. Jeśli chodzi o wiek ludzi, zdecydowanie najwięcej pasażerów było w wieku $16$-$40$ lat, a~ogólniej rozkład wartości przypomina rozkład normalny ze średnią w okolicach $30$ lat. Natomiast w przypadku zmiennej \texttt{fare}, czyli opłacie za bilet, zdecydowanie najwięcej wartości jest z~zakresu $0$-$50$, a rozkład wartości swoim kształtem przypomina nieco rozkład eksponencjalny.
+\par
+Poniżej zaproponowane zostało porównanie wartości zmiennej objaśnianej \texttt{survived} w zależności od zmiennej numerycznej \texttt{fare}. W tym celu podzieliliśmy wartości tej zmiennej na $4$~przedziały, tak aby w każdym z nich znajdowało się tyle samo wartości z naszego zbioru danych. W tym celu użyliśmy metody \texttt{qcut} \cite{qcut} z pakietu \textbf{pandas}:
+
+\begin{lstlisting}[language=Python, caption={Fare przedziały}, label={lst:code4}, mathescape=true, breaklines=true]
+df_titanic['fare_przedzialy'] = pd.qcut(df_titanic['fare'], 4)
+\end{lstlisting}
+
+Poniżej, na rysunku \ref{fig:Fare_Barplot} zilustrowane zostało porównanie odsetku ocalałych ludzi dla zmiennej \texttt{fare}, podzielonej na $4$ przedziały. 
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=1]{Images/Fare_Barplot.jpg}}
+\caption{Wskaźniki przeżywalności dla poszczególnych przedziałów zmiennej fare (ceny biletu}
+\label{fig:Fare_Barplot}
+\end{figure}
+
+Wyraźnie widzimy z powyższego wykresu następującą tendencję: za większymi opłatami za bilety idzie większa średnia wartości zmiennej \texttt{survived}, czyli po prostu większy odsetek ocalałych pasażerów. Możemy uzasadnić to tym, że większe ceny biletów przeważnie były równoważne z miejscami w wyższych klasach. Dla przedziału z największymi wartościami zmiennej \texttt{fare} odsetek ten jest równy prawie $60\%$. Kolejne grupy zmiennej \texttt{fare}, zaczynając od największych wartości mają odpowiednio $45\%$, $30\%$ i $25\%$.
+\par
+Poniżej, na rysunku \ref{fig:Embarked_Barplot} przedstawione zostało porównanie średnich wartości zmiennej \texttt{survived} w zależności od zmiennej jakościowej \texttt{embarked} informującej o porcie w którym wsiadł każdy pasażer.
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=1]{Images/Embarked_Barplot.jpg}}
+\caption{Wskaźniki przeżywalności dla poszczególnych kategorii zmiennej \texttt{embarked}}
+\label{fig:Embarked_Barplot}
+\end{figure}
+
+Przypomnijmy, \texttt{embarked}$=$\textbf{S} oznacza Souhampton, czyli angielski port z którego wyruszył titanic. Następnie miał przystanek we francuskim porcie Cherbourg (\texttt{embarked}$=$\textbf{C}), aby potem skierować się do irlandzkiego miasta nadmorskiego Queenstown (\texttt{embarked}$=$\textbf{Q}), dzisiejszego Cobh, skąd wypłynął dalej na zachód w kierunku Nowego Jorku, który był końcowym celem podróży transatlantyku. Jak możemy zauważyć, jeśli chodzi o pasażerów, którzy wsiedli w~Souhampton i Queenstown, współczyniki przezywalności są bardzo zbliżone do siebie i są równe w przybliżeniu $35\%$. Ciekawy jest fakt, że odsetek pasażerów którzy przeżyli, z tych którzy wsiedli we francuskim Cherbourg jest znacząco większy - ponad połowa takich osób przeżyła katastrofę. Nie wiemy do końca czym to jest spowodowane, być może ludzie, którzy weszli na pokład we Francji, byli statystycznie wyższej klasy społecznej, przez co w jakiś sposób bardziej uprzywilejowani przy ewakuacji z podkładu tonącego statku. Niezależnie od powodów ciężko uznać różnicę między portem francuskim, a pozostałymi dwoma za kompletnie nieistotną.
+\par
+Natomiast na rysunku \ref{fig:Age_Barplot} poniżej przedstawiony jest wykres słupkowy ilustrujący jaki procent ludzi przetrwało katastrofę statku, w zależności od wieku danej osoby. I znowu, dzielimy zmienną numeryczną \texttt{age} na $4$ grupy (przedziały) za pomocą metody \texttt{qcut()}, tak aby do każdej z nich należało tyle samo obserwacji, podobnie jak wcześniej zrobiliśmy to ze zmienną \texttt{fare}. Następnie obliczamy średnią zmiennej \texttt{survived} dla każdej z $4$ grup.
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=1]{Images/Age_Barplot.jpg}}}
+\caption{Histogramy dla zmiennych ilościowych}
+\label{fig:Age_Barplot}
+\end{figure}
+Z powyższego rysunku wynika, że nie można określić jednoznacznej tendencji między wiekiem, a odsetkiem ludzi, którzy przeżyli wypadek statku. Widzimy jednak, że największą średnią wartość zmiennej \texttt{survived} mają dzieci i młodzież - przedział wiekowy od $0$ do $22$ lat oraz najstarsza grupa w przedziale wiekowym od $36$ do $80$ lat. Jest to dość zrozumiałe, ponieważ podczas akcji ratunkowej to właśnie dzieci oraz osoby starsze miały większy priorytet do szalup ratunkowych. Widzimy, że trzecią w kolejności grupą jest przedział między $22$, a $30$ rokiem życia, i różnice między tymi $3$ grupami nie są znaczące - wartości te są w przybliżeniu między $38\%$, a $45\%$. Nieco większa różnica jest między wspomnianymi przedziałami wiekowymi, a ostatnim - między $30$, a $36$ rokiem życia, dla którego odsetek uratowanych jest na poziomie mniej więcej $27\%$, czyli w dalszym ciągu nie jest to kolosalna różnica między tym, a pozostałymi przedziałami wiekowymi. 
+\par Być może więcej powie nam wykres, w którym oprócz wieku, jednocześnie weźmiemy pod uwagę również płeć pasażera. Każdą z $4$ grup wiekowych podzielimy na $2$ podgrupy wg. płci, a~następnie obliczymy jaki odsetek tych pasażerów się uratowało. Wyniki opisanych wyżej operacji przedstawione zostały na rysunku \ref{fig:Barplots_2}.
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=1]{Images/Age&Sex_Barplots.jpg}}}
+\caption{Częstotliwości występowania zmiennych jakościowych}
+\label{fig:Barplots_2}
+\end{figure}
+
+Z powyższego rysunku jasno wynika, że niezależnie od grupy wiekowej kobiety miały dużo większą przeżywalność, co jest logiczne, bo kobiety miały pierwszeństwo przy umieszczaniu ludzi na łodzie ratunkowe podczas ucieczki z tonącego statku. Najmniejszą dysproporcję między płciami możemy odnotować najmłodszej grupie wiekowej, co może być wynikiem tego, że oprócz kobiet, pierwszeństwo w ratowaniu miały dzieci, w przypadku których płeć była najmniej istotna ze wszystkich grup wiekowych. Jednakże wciąż jest to ponad $2$ większy odsetek uratowanych kobiet niż mężczyzn. Skupiając się jedynie na płci męskiej, widzimy jasno tendencję, że wraz ze wzrostem wieku spada odsetek uratowanych. Natomiast sytuacja wygląda dużo ciekawiej w~przypadku kobiet, gdzie w najmłodszej grupie było najmniej uratowanych osób, a~największy odsetek kobiet, które przeżyły jest w grupie wiekowej $30$-$36$ lat. Takie wartości mogą być spowodowane tym, że jak już wspomnieliśmy wcześniej, wszystkie kobiety, niezależnie od wieku, miały pierwszeństwo przy ewakuacji, a różnice przypuszczalnie mogą wynikać np. z~siły danej osoby czy przytomności umysłu, co trochę faworyzuje kobiety w sile wieku. 
+\par
+Kolejnym pomysłem na wizualizacje danych będzie wykres skrzypcowy \cite{violin_wiki}. Jest to ciekawy, ale rzadko spotykany rodzaj wykresu, który pozwala zilustrować porównanie rozkładów zmiennej ilościowej, przy podziale na kilka grup (np. dwie zmienne jakościowe) jednocześnie. W~naszym przypadku zobrazujemy rozkład zmiennej numerycznej \texttt{age} przy podziale na kategorie zmiennej \texttt{pclass}, zaznaczone na osi poziomej. Dodatkowo, każda kategoria zmiennej \texttt{pclass} będzie dodatkowo podzielona na grupy, ze względu na wartości zmiennej \texttt{survived}. Wykres ten wykonany został przy pomocy funkcji \texttt{violinplot} \cite{violin} z biblioteki \textbf{seaborn}, a~wyniki przedstawione są poniżej na rysunku \ref{fig:Violin}.
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=1]{Images/Age&Pclass_Violin.jpg}}
+\caption{Histogramy dla zmiennych ilościowych}
+\label{fig:Violin}
+\end{figure}
+
+Z powyższego wykresu możemy wyciągnąć kilka wniosków: 
+\begin{itemize}
+    \item Jedyne dzieci do lat $10$, które nie przeżyły katastrofy miały bilety trzeciej klasy.
+    \item Zauważyliśmy wcześniej z rysunku \ref{fig:Histograms}, że dla całego zbioru danych, większość wartości zmiennej \texttt{age} znajduje się w przedziale $16$-$40$ lat. Widzimy, że dla biletów drugiej i trzeciej klasy jest podobnie, jednakże dla biletów pierwszej klasy, większość ludzi jest w przedziale $25$-$60$ lat.
+    \item Ogólnie można zaobserwować tendencję, że rozkłady dla poszczególnych klas, dla wartości \texttt{survived}$=$\textbf{1} są bardziej skupione niż dla wartości \texttt{survived}$=$\textbf{0} w przypadku mniejszych wartości zmiennej \texttt{age}, a mniej skupione w przypadku większych wartości zmiennej \texttt{age}, czyli dla starszych ludzi.
+\end{itemize}
+
+Na końcu zajmiemy się ostatnimi zmiennymi objaśniającymi, które nie były dotychczas przez nas wykorzystane - \texttt{parch} i \texttt{sibsp}. Przy pomocy metody \texttt{crosstab()} \cite{crosstab} z pakietu \textbf{pandas} zostały stworzone dwie tabele krzyżowe. Jedna dla pary \texttt{parch} i \texttt{survived}, a druga dla pary \texttt{sibsp} i \texttt{survived}. Wyniki zostały przedstawione odpowiednio w tabelach \ref{crosstable1} i \ref{crosstable2}.
+
+\begin{table}[H]
+\centering
+\caption{Tabela krzyżowa dla zmiennych survived i parch}
+\begin{tabular}{|l|rrrrrrrr|}
+\toprule
+\hline
+parch &    0 &    1 &   2 &  3 &  4 &  5 &  6 &  9 \\ 
+\hline
+survived &      &      &     &    &    &    &    &    \\
+
+\midrule
+0        &  666 &   70 &  56 &  3 &  5 &  5 &  2 &  2 \\
+1        &  336 &  100 &  57 &  5 &  1 &  1 &  0 &  0 \\
+\hline
+\bottomrule
+\end{tabular}
+\label{crosstable1}
+\end{table}
+
+
+
+\begin{table}[H]
+\centering
+\caption{Tabela krzyżowa dla zmiennych survived i sibsp}
+\begin{tabular}{|l|rrrrrrr|}
+\toprule
+\hline
+sibsp &    0 &    1 &   2 &   3 &   4 &  5 &  8 \\
+\hline
+survived &      &      &     &     &     &    &    \\
+\midrule
+0        &  582 &  156 &  23 &  14 &  19 &  6 &  9 \\
+1        &  309 &  163 &  19 &   6 &   3 &  0 &  0 \\
+\hline
+\bottomrule
+\end{tabular}
+\label{crosstable2}
+\end{table}
+
+Wyniki w przypadku obu zmiennych prezentują się bardzo podobnie. Widzimy, że zarówno w przypadku zmiennej \texttt{parch}, jak i \texttt{sibsp} dla wartości \textbf{0}, ok. $1/3$ ludzi przeżyło katastrofę, dla wartości \textbf{1} i \textbf{2}, ok. połowa ludzi przeżyło, a dla wartości większych niż \textbf{2}, odsetek uratowanych ludzi z powrotem spada.
+
+
+################################
+
+
+
+%---------------------------------------------------------------------------------------------------
+
+\section{Metody uczenia zespołowego}
+\subsection{Ogólna idea}
+Uczenie zespołowe (ang. \texttt{ensemble learning}) to technika w dziale uczenia maszynowego, która polega na stworzenie wielu pojedynczych, elementarnych modeli (ang. \texttt{weak learners)} w celu połączenia ich i stworzenia jednego, końcowego modelu predykcyjnego (ang. \texttt{strong learner}), który byłby lepszy. W przypadku klasyfikacji, najpowszechniejszą metodą łączenia pojedynczych klasyfikatorów jest głosowanie, która polega na tym, że każdy 
+podstawowy model osobno przewiduje wartość zmiennej jakościowej, a potem prognozę, która wystąpiła najwięcej razy, traktujemy jako ostateczną predykcję modelu.
+
+\subsection{Pojedynczy klasyfikator - drzewo decyzyjne}
+
+Metody uczenia zespołowego mogą być aplikowane na praktycznie każdym podstawowym klasyfikatorze, jednakże zdecydowanie najpowszechniejsze jest drzewo decyzyjne \cite{drzewo} (ang. \texttt{decision tree}), które będzie także naszym wyborem. Najważniejszymi parametrami drzewa decyzyjnego są: 
+\begin{itemize}
+    \item \texttt{max depths} - parametr określający maksymalną głębokość drzewa. Im większa ta wartość, tym bardziej złożone drzewo powstanie. Wartość ta nie może być zbyt mała, ponieważ wtedy drzewo może mieć zbyt małą elastyczność żeby uchwycić wzorce i potencjalne interakcje w zbiorze treningowym. Jednakże jeśli ustawimy zbyt dużą wartość tego parametru, wtedy istnieje ryzyko, że nastąpi przeuczenie modelu do zbioru treningowego, co również będzie wiązało się ze wzrostem błędu na zbiorze testowym.
+    \item \texttt{min samples split} -  parametr, który określa ile przynajmniej obserwacji musi znajdować się w węźle, aby móc go podzielić.
+    \item \texttt{min samples leaf} - minimalna liczba określająca węzeł, którego nie chcemy dalej dzielić (ang. \texttt{leaf node}).
+\end{itemize}
+
+
+\subsection{Bagging}
+
+\texttt{Bagging} \cite{bagging} (Bootstrap aggregating), to prawdopodobnie najpopularniejsza technika uczenia zespołowego należąca do grupy równoległych metod zespołowych, które przede wszystkim wykorzystują niezależność między podstawowymi klasyfikatorami, co pozwala zmniejszyć błąd poprzez uśrednienie. Warto dodać, że w przypadku, gdy podstawowym klasyfikatorem jest drzewo decyzyjne, to w przypadku \texttt{bagging'u} często mówimy o tzw. \texttt{bagged trees}.
+\par 
+Na początku warto wyjaśnić czym jest próba \texttt{bootstrap} \cite{bootstrap}. Jest to po prostu losowanie ze zwracaniem $n$ obserwacji ze zbioru wszystkich obserwacji, który ma $n$ elementów. Innymi słowy obserwacje mogą się powtarzać w~próbce, ale także możliwe (wręcz prawie pewne) jest, że niektóre obserwacje zostaną pominięte. Oczywiście parametrem, który przeważnie możemy modyfikować jest $B$ - liczba boostrapowych prób, które chcemy losować.
+\par
+Dysponując $B$ bootstrapowymi próbami, dla każdej z nich dopasowujemy nasze drzewo decyzyjne, a następnie dysponując $B$ drzewami, możemy interpretować kategorię zwracaną przez każde z nich jak "oddany głos", a następnie kategoria która otrzyma najwięcej (tzw. \texttt{soft-voting}) albo większość, czyli ponad połowę (tzw. \texttt{hard-voting}) głosów jest zwracana przez model zespołowy jako ostateczna prognoza.
+
+\subsection{Random forest}
+
+\texttt{Random forest} (las losowy) \cite{las_losowy_wiki} to szczególny przykład metody \texttt{bagged trees}. Polega na tym samym co metoda \texttt{bagged trees}, ale dodatkowo przy każdym losowaniu próby bootstrap, losowany jest także podzbiór cech wykorzystywanych przy tworzeniu danego pojedynczego drzewa decyzyjnego. Ile zmiennych jest losowanych? Otóż jeśli $p$ to liczba wszystkich zmiennych, to oczywiście można wybrać jakąkolwiek liczbę mniejszą od $p$, jednakże przyjmuje się, że odpowiednimi wartościami są $\sqrt{p}$ dla problemu klasyfikacji oraz $p/3$ dla regresji. Na rysunku \ref{fig:rf_plot} pokazany jest zwizuwalizowany schemat działania techniki \texttt{random forest}.
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=0.85]{Images/rf_plot.jpg}}
+\caption{Schemat działania metody \texttt{random forest}}
+\label{fig:rf_plot}
+\end{figure}
+
+\subsection{Boosting}
+\texttt{Boosting} (wzmacnianie) \cite{boosting} to rodzina algorytmów w uczeniu maszynowym, które konwertują klasyfikatory słabe  (ang. \texttt{weak learners}) w klasyfiktory mocne (ang. \texttt{strong learners}). Przez kolejne iteracje, algorytm stara się wykorzystywać informacje o podstawowym klasyfikatorze przy tworzeniu końcowego klasyfikatora. \texttt{Boosting} może być postrzegane jako uogólnienie metody \texttt{bagging}.
+\par
+Większość algorytmów wzmacniania polega na iteracyjnym uczeniu się słabych klasyfikatorów z uwzględnieniem rozkładu i dodawaniu ich do ostatecznego silnego klasyfikatora. Po dodaniu słabego klasyfikatora, wagi poszczególnych obserwacji z naszych danych są ponownie dostosowywane, proces ten nazywamy ponownym ważeniem (tzw. \texttt{resampling} \cite{resampling}). Błędnie sklasyfikowane dane wejściowe zyskują większą wagę, a przykłady, które zostały poprawnie sklasyfikowane, tracą na wadze. Tak więc przyszłe słabe klasyfikatory skupiają się bardziej (tzn. jest większe prawdopodobieństwo, że zostaną wylosowane do próby bootstrapowej), na tych obserwacjach, które zostały przez poprzednie słabe klasyfikatory błędnie sklasyfikowane. 
+\par
+Poniżej na rysunku \ref{fig:bag+boost_plot} przedstawione zostało porównanie przedstawiające różnice między metodami \texttt{bagging} i \texttt{boosting}. Warto zwrócić uwagę na fakt, że \texttt{bagging} jest przykładem równologłej metody zespołowej, natomiast \texttt{boosting} jest metodą sekwencyjną.
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=0.85]{Images/BaggingVSboosting.jpg}}
+\caption{Różnica działania metod \texttt{bagging} i \texttt{boosting}}
+\label{fig:bag+boost_plot}
+\end{figure}
+
+Pierwszym głośnym algorytmem \texttt{boosting}'u był \textbf{AdaBoost} \cite{AdaBoost} zaproponowany przez Roberta Shapire'a i Yoav Freunda w 1995r. \cite{AdaBoost_artykul} Algorytm ten był przeznaczony tylko i wyłącznie do klasyfikacji binarnej. Rozszerzeniem tego algorytmu na problemy klasyfikacji wieloklasowej jest algorytm \textbf{AdaBoost.M1} , zaproponowany przez Roberta Shapire'a i~Yoav Freunda w 1996r. \cite{AdaBoostM1_artykul} Poniżej przedstawiony jest schemat działania algorytmu AdaBoost.M1:
+\begin{enumerate}
+    \item Ustal początkowe wagi przypadków $\textbf{w}^{(1)}=\left( w_{1}^{(1)}, w_{2}^{(1)},...,w_{n}^{(1)} \right)'$, gdzie $w_{j}^{(1)}\in \left[ 0,1 \right]$ oraz $\sum_{i=1}^{n} w_{i}^{(1)}=1$. Zazwyczaj przyjmuje się, że $w_{j}^{(1)}=1/n$.
+    \item Dla $b=1,2,...,B:$
+    \begin{enumerate}
+        \item wyznacz próbę bootstrapową $\mathcal{L}_{n}^{*b}$ na bazie $\mathcal{L}_{n}$, przyjmując $P((x_{j}, g_{j})\in \mathcal{L}_{n}^{*b})=  w_{j}^{(b)}$ ($x_{j}$ -zmienne objaśniające, $g_{j}$ - zmienna objaśniana),
+        \item skonstruuj klasyfikator $\hat{d}_{b}$ na podstawie próby bootstrapowej$\mathcal{L}_{n}^{*b}$,
+        \item wyznacz ważony błąd klasyfikacji \\
+        $\hat{e}_{b}=\sum_{i=1}^{n} w_{i}^{(b)} I_{i}^{(b)} $, gdzie $I_{i}^{(b)}=  \begin{cases}
+1 & \hat{d}_{b}(x_{i}) \not= g_{i} \\
+0 & \hat{d}_{b}(x_{i}) = g_{i} 
+\end{cases} $
+    
+        \item jeżeli $\hat{e}_{b} \in (0, 1/2)$ oblicz $\beta_{b}=\frac{\hat{e}_{b}}{1-\hat{e}_{b}}$. W przeciwnym wypadku przyjmij $w_{i}^{(b)}=1/n$ i wróć do kroku a),
+        \item aktualizuj wagi $w_{j}^{(b+1)}=\frac{w_{j}^{(b)} \beta_{b}^{1-I_{j}^{(b)}}} {\sum_{i=1}^{n} w_{i}^{(b)}^{1-I_{j}^{(b)}} } $, $j=1,2,...,n$.
+    \end{enumerate}
+    \item Wyznacz końcowy klasyfikator \\
+    \centerline{ $\hat{d}_{AdaBoost}(\textbf{x})= \argmax\limits_{1 \leq k \leq K} \sum_{b=1}^{B} \left[ ln \left(\frac{1}{\beta_{b}}\right)   \mathbbm{1}  \left(\hat{d}_{b}(\textbf{x})=k \right) \right] $}
+\end{enumerate}
+
+Jak możemy zauważyć powyżej, poprzez iteracyjne aktualizowanie wag, w odróżnieniu od metody \texttt{bagging}, klasyfikatory składowe w
+\textbf{AdaBoost} nie są tworzone niezależnie od siebie: aktualny klasyfikator zależy od klasyfikatorów w poprzednich krokach. Widzimy też, że klasyfikatory składowe otrzymują wagi równe $ln \left(\frac{1}{\beta_{b}} \right)$, tzn. przy konstrukcji klasyfikatora złożonego za pomocą głosowania dajemy większą wagę dokładniejszym klasyfikatorom. Przypadki $\{ w_{i}^{(b)} \}_{i=1,...,n}$ uwzględniane są w b-tej iteracji za pomocą losowania $n$ obserwacji ze zwracaniem, z prawdopodobieństwem proporcjonalnym do ich wag, czyli jest to przykład ponownego ważenia.
+
+
+\section{Klasyfikacja zmiennej objaśnianej}
+
+\subsection{Opis symulacji}
+
+Na początku wybrane zostało $9$ wariantów opisanych wyżej metod: 
+\begin{itemize}
+\item pojedyncze drzewo decyzyjne
+\item \texttt{bagged trees} z $25$ bootstrapowymi replikacjami
+\item \texttt{bagged trees} ze $150$ bootstrapowymi 
+replikacjami
+\item \texttt{random forest} z $25$ bootstrapowymi replikacjami oraz podzbiorem $3$ losowych cech 
+\item \texttt{random forest} ze $150$ bootstrapowymi replikacjami oraz podzbiorem $3$ losowych cech
+\item \texttt{boosting} z $25$ iteracjami 
+\item \texttt{boosting} ze $150$ iteracjami
+\item \texttt{boosting} z $25$ iteracjami oraz aktualizacją wag zaproponowaną przez Leo Breimana
+\item \texttt{boosting} ze $150$ iteracjami oraz aktualizacją wag zaproponowaną przez Leo Breimana
+\end{itemize}
+Dodajmy, że w ostatnich dwóch metodach wagi zaproponowane przez Breimana różnią nieznacznie (przemnożone o stałą) względem tego co zaproponował Freund. Więcej o tych różnicach można przeczytać tutaj~\cite{Breiman_wagi}. 
+\par 
+Symulacja polegała na obliczeniu dokładności, czułości oraz swoistości \cite{SensSpec} każdej z wyżej wymienionych metod. Losowany był zbiór uczący o wielkości $70\%$ wszystkich obserwacji, a reszta trafiła do zbioru testowego. Na podstawie zbioru uczącego skonstruowane zostały klasyfikatory złożone (oraz prosty w przypadku drzewa decyzyjnego), a następnie na zbiorze testowym obliczyliśmy dokładność, czułość oraz swoistość. Wszystkie te operacje powtórzyliśmy $100$ razy, oczywiście gromadząc wyniki.
+
+\subsection{Sposoby implementacji}
+
+Cała symulacja została przeprowadzona w \textbf{R}, ponieważ w języku \textbf{Python} w pakiecie \textbf{scikit-learn} nie istnieje sposób, żeby uwzględnić zmienne jakościowe bez potrzeby kodowania. 
+\par
+Podstawowy klasyfikator, czyli drzewo decyzyjne zostało zaimplementowane za pomocą funkcji \texttt{rpart()} z pakietu \textbf{rpart}, z ustalonym parametrem \texttt{minsplit}$=2$. Wartość ta została wybrana specjalnie tak mała, żeby drzewo było bardziej złożone i potencjalnie zwiększyć niestabilność tej metody. Metoda \texttt{bagged trees} została zaimplementowana za pomocą funkcji \texttt{bagging()} z pakietu \textbf{ipred}, również z ustalonym parametrem \texttt{minsplit}$=2$, tylko tym razem za pomocą funkcji \texttt{rpart.control()} . Metoda \texttt{random forest} została wdrożona za pomocą funkcji \texttt{randomForest()} z pakietu \textbf{randomForest}. Ustawiliśmy parametr kontrolujący minimalną liczbę węzłów końcowych \texttt{nodesize}$=5$. Metoda \texttt{boosting} została zaimplementowana za pomocą funkcji \texttt{boosting()} z pakietu \textbf{adabag}. Funkcja ta używa algorytmu \textbf{AdaBoost.M1} z wykorzystaniem drzewa decyzyjnego jako pojedynczego klasyfikatora do obliczenia złożonego klasyfikatora. I tutaj również ustaliliśmy paramter \texttt{minsplit}$=2$.
+
+\newpage
+\subsection{Wyniki}
+
+Tak jak wspomnieliśmy wcześniej, zostało zebranych po $100$ wartości liczbowych dokładności, czułości i swoistości dla każdej z $9$ metod, które były rozpatrywane.
+\par
+Na początek zajmiemy się dokładnością, która jest prawdopodobnie najpowszechniejszą i najwięcej mówiącą miarą oceny klasyfikacji. Jest to stosunek poprawnie zaklasyfikowanych obiektów do wszystkich obserwacji. Na rysunku \ref{fig:dokladnosc} zaprezentowane zostały wykresy pudełkowe przedstawiające dokładności dla wszystkich opracowanych metod. Do wykresów zostały dodane wartości średnie dla każdej metody, które zostały oznaczone czerwonymi kropkami. 
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=0.78]
+{Images/dokladnosc.jpg}}
+\caption{Porównanie dokładności drzewa decyzyjnego oraz metod uczenia zespołowego dla zbioru danych Titanic}
+\label{fig:dokladnosc}
+\end{figure}
+
+Najważniejszą rzeczą jaką widzimy z powyższego wykresu widzimy jest to, że żadna z metod uczenia zespołowego zaimplementowana na naszym zbiorze danych nie poprawiła znacząco dokładności względem podstawowego modelu - drzewa decyzyjnego, którego średnia dokładność to ok. $0.81$. Przyczyn tego może być kilka, ale najbardziej prawdopodobna jest taka, że nasz zbiór danych jest zbyt mało skomplikowany, tym samym klasyfikacja zmiennej \texttt{survived} to \textbf{problem o niewystarczającej złożoności}. Rozumiemy przez to, że problem jest stosunkowo zbyt prosty, przez co pojedyncze drzewo klasyfikacyjne jest w stanie na tyle dobrze go uchwycić, że wprowadzenie modeli zespołowych nie przynosi poprawy.  Co więcej, widzimy, że wszystkie $4$ warianty \texttt{boosting}'u nawet pogorszyły średnią dokładność. Najlepsze wyniki jeśli chodzi o dokładność, ale tylko nieznacznie, uzyskała metoda \texttt{bagged trees}, ale również jest to średnio tylko ok. $0.82$, a~najgorzej poradziły sobie warianty \texttt{boosting}'u z aktualizacjami wag od Freunda ze średnimi na poziomie ok. $0.785$. Widzimy, że w przypadku \texttt{bagging}'u i \texttt{random forest} liczba bootstrapowych próbek nie miała dużego znaczenia dla ewentualnej poprawy rezultatów, natomiast w~przypadku obu wariantów \texttt{boosting}'u większa liczba iteracji miała nawet negatywny wpływ na średnią dokładność. Jeśli chodzi o rozrzuty wyników, to nie obserwujemy większych różnic, poza \texttt{boosting}'iem ze $150$ iteracjami z aktualizacją wag Breimana, gdzie wyniki mają dużo większy rozstęp międzykwartylowy.
+
+\par
+Na rysunku \ref{fig:czulosc} poniżej przedstawione zostały wykresy pudełkowe dla czułości. Dodano także wartości średnie dla każdej metody, oznaczone czerwonymi kropkami.  Przypomnijmy, że czułość (ang. \texttt{sensitivity}) to stosunek poprawnie zaklasyfikowanych pozytywnych przypadków do wszystkich rzeczywistych pozytywnych przypadków. Jednakże w klasycznych testach np. w~medycynie czy w finansach "pozytywny" lub "dodatni" wynik testu oznacza coś negatywnego np. występowanie choroby u pacjenta czy niewypłacalność klienta, a~w~naszym przypadku "pozytywny" przypadek (\texttt{survived}$=1$) oznacza coś pozytywnego w istocie, bo przeżycie katastrofy przez daną osobę. 
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=0.78]
+{Images/czulosc.jpg}}
+\caption{Porównanie czułości drzewa decyzyjnego oraz metod uczenia zespołowego dla zbioru danych Titanic}
+\label{fig:czulosc}
+\end{figure}
+
+Jak obserwujemy powyżej, jeśli chodzi o czułość to wartość średnia równa w przybliżeniu $0.61$ dla drzewa decyzyjnego jest najmniejsza i reszta metod ma średnie czułości na podobnym poziomie (\texttt{bagged trees}) lub na lepszym (\texttt{random forest} - ok. $0.66$ i \texttt{boosting} $0.67$-$0.7$). Najlepsze wyniki czułości uzyskały oba warianty \texttt{boosting}'u ze $150$ iteracjami. Widzimy, że w~przypadku metod \texttt{bagged trees} i \texttt{random forest} liczba próbek bootstrapowych nie miała znaczenia dla średnich wartości czułości, natomiast w przypadku \texttt{boosting}'u wraz z~większą liczbą iteracji wystąpił nieznaczny wzrost średniej. Ponadto, rodzaj aktualizacji wag w~\texttt{boosting}'u nie miał praktycznie żadnego znaczenia dla wartości czułości. Patrząc na rozrzuty rezultatów, możemy stwierdzić, że zdecydowanie największy rozstęp międzykwartylowy miało drzewo decyzyjne.
+\par
+Rysunek \ref{fig:swoistosc} poniżej przedstawia wykresy pudełkowe swoistości, czerwonymi kropkami zaznaczono wartości średnie dla odopowiednich wariantów metod. Warto przypomnieć, że swoistość (ang. \texttt{specificity}) to stosunek obserwacji poprawnie zaklasyfikowanych jako negatywne do wszystkich obserwacji, które faktycznie były negatywne (\texttt{survived}$=0$).
+
+\begin{figure}[H]
+\centering
+\centerline{\includegraphics[scale=0.78]
+{Images/swoistosc.jpg}}
+\caption{Porównanie swoistości drzewa decyzyjnego oraz metod uczenia zespołowego dla zbioru danych Titanic}
+\label{fig:swoistosc}
+\end{figure}
+
+Jak możemy zaobserwować powyżej, wartości swoistości są dużo większe od czułości, co mówi nam, że wszystkie zaproponowane modele dużo lepiej poradziły sobie z wykryciem kategorii \texttt{survived}$=0$, czyli pasażerów, którzy nie przeżyli katastrofy. Widzimy, że drzewo decyzyjne uzyskało bardzo dobry średni wynik ok. $0.9$ i tylko oba modele \texttt{bagged trees} uzyskały lepszy średni rezultat na poziomie ok. $0.91$. Najgorzej natomiast poradziły sobie algorytmy \texttt{boosting}'u, w szczególności te z aktualizacją wag Freunda z najmniejszym średnim wynikiem ok. $0.83$. Ponadto widzimy, że wyniki dla \texttt{boosting}'u są gorsze dla większej liczby iteracji algorytmu.
+
+\section{Podsumowanie}
+
+Głównym celem powyższej pracy było przedstawienie najpopularniejszych metod uczenia zespołowego, implementacja ich na wybranym przez nas zbiorze danych Titanic, a~następnie sprawdzenie jaki wpływ będą mieć na wyniki klasyfikacji. Zanim to jednak nastąpiło, w~rozdziale~1 przeprowadziliśmy analizę eksploracyjną obejmującą przygotowanie danych do analizy - czyli potrzebne transformacje - oraz analizę poszczególnych zmiennych, zarówno wizualną, jak i~formalną. Następnie opisaliśmy krótko wybrane przez nas techniki uczenia zespołowego, a~na końcu przeprowadziliśmy symulacje w~której sprawdziliśmy ich wpływ na dokładność klasyfikacji zmiennej objaśnianej \texttt{survived}.
+\par
+Po wykonaniu symulacji i~analizie wyników okazało się, że metody uczenia zespołowego nie przyniosły praktycznie żadnego efektu jeśli chodzi o poprawę dokładności. Niektóre z nich zwróciły rezultaty bardzo przybliżone, a niektóre z nich (\texttt{boosting}) nawet gorsze. Przypuszczalnie wybrany zbiór danych w naszym przypadku był zbyt mało skomplikowany, co sprawiło, że klasyfikacja była na tyle prosta, że pojedynczy podstawowy klasyfikator - czyli drzewo decyzyjne - był modelem wystarczającym, aby odpowiednio uchwycić ten problem. Być może wystąpiła także niewystarczająca różnorodność w bazowych modelach. W przypadku, gdy modele składowe są zbyt podobne i mają podobne wady, połączenie ich nie musi prowadzić nas do poprawy dokładności. Przyczyn tego, dlaczego w naszym przypadku metody zespołowe nie przyniosły pożądanego skutku, może być dużo. Warto jednak zwrócić uwagę na fakt, że poradziły one sobie lepiej przy pomiarach czułości (czyli przy wykrywaniu kategorii \texttt{survived}$=1$) niż pojedyncze drzewo klasyfikacyjne.
+\par
+Ostatecznym wnioskiem powinno być to, żeby nie używać metod uczenia zespołowego bez jakiegokolwiek zastanowienia, licząc na poprawę wyników klasyfikacji, ponieważ nie w każdej sytuacji otrzymamy oczekiwane rezultaty. Przede wszystkim, trzeba przeanalizować czy wybrany bazowy klasyfikator nie jest dla nas wystarczający, żeby poradzić sobie z analizowanym problemem i zwrócić zadowalające wyniki. Natomiast jeśli zdecydujemy się, że podstawowy klasyfikator to za mało, to przy dzisiejszej mnogości różnych technik i metod z zakresu uczenia zespołowego, a także tego, ile  w każdej z tych metod trzeba dostroić różnych parametrów, należy się zastanowić i spróbować wielu różnych potencjalnych rozwiązań w pogoni za oczekiwaną poprawą wyników.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+
+
+
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thebibliography}{9}
+\bibitem{countplot}
+https://seaborn.pydata.org/generated/seaborn.countplot.html
+\bibitem{.hist}
+\begin{verbatim}
+https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.hist.html   
+\end{verbatim}
+\bibitem{qcut}
+https://pandas.pydata.org/docs/reference/api/pandas.qcut.html
+\bibitem{violin_wiki}
+\begin{verbatim}
+https://en.wikipedia.org/wiki/Violin_plot
+\end{verbatim}
+\bibitem{violin}
+https://seaborn.pydata.org/generated/seaborn.violinplot.html
+\bibitem{crosstab}
+https://pandas.pydata.org/docs/reference/api/pandas.crosstab.html
+\bibitem{drzewo}
+\begin{verbatim}
+https://pl.wikipedia.org/wiki/Drzewo_decyzyjne
+\end{verbatim}
+\bibitem{bagging}
+\begin{verbatim}
+https://en.wikipedia.org/wiki/Bootstrap_aggregating
+\end{verbatim}
+\bibitem{bootstrap}
+\begin{verbatim}
+https://pl.wikipedia.org/wiki/Bootstrap_(statystyka)
+\end{verbatim}
+\bibitem{las_losowy_wiki}
+\begin{verbatim}
+https://pl.wikipedia.org/wiki/Las_losowy
+\end{verbatim}
+\bibitem{boosting}
+\begin{verbatim}https://en.wikipedia.org/wiki/Boosting_(machine_learning)
+\end{verbatim}
+\bibitem{resampling}
+ \begin{verbatim}https://en.wikipedia.org/wiki/Sample-rate_conversion\end{verbatim}
+\bibitem{AdaBoost}
+\begin{verbatim}
+https://en.wikipedia.org/wiki/AdaBoost
+\end{verbatim}
+\bibitem{AdaBoost_artykul}
+Freund, Yoav; Schapire, Robert E. (1995), \emph{A desicion-theoretic generalization of on-line learning and an application to boosting}, Lecture Notes in Computer Science, Berlin, Heidelberg: Springer Berlin Heidelberg, pp. 23–37
+
+\bibitem{AdaBoostM1_artykul}
+Freund, Y.; Schapire, R.E., et al., (1996), \emph{Experiments with a new boosting algorithm}. In:
+Icml, Vol. 96. Citeseer, pp. 148–156
+
+\bibitem{Breiman_wagi}
+Alfaro, E.; Gamez, M., & García, N. (2013). \emph{adabag: An R Package for Classification with Boosting and Bagging.} Journal of Statistical Software, 54(2), 1–35
+\bibitem{SensSpec}
+\begin{verbatim}
+https://en.wikipedia.org/wiki/Sensitivity_and_specificity
+\end{verbatim}
+
+% biblio bez cite'u
+\bibitem{Ensemble_geek}
+\begin{verbatim}
+https://geek.justjoin.it/ensemble-learning-czym-czym-polega/#Glosowanie_i_usrednianie
+\end{verbatim}
+\bibitem{Ensemble_wiki}
+\begin{verbatim}
+https://en.wikipedia.org/wiki/Ensemble_learning
+\end{verbatim}
+\bibitem{tree_hyperparameters}
+https://www.educba.com/decision-tree-hyperparameters/
+\bibitem{Ensemble_towards}
+https://towardsdatascience.com/ensemble-methods-bagging-boosting-and-stacking-c9214a10a205
+\bibitem{rf_plot}
+https://www.javatpoint.com/machihttps://twitter.com/home?lang=plne-learning-random-forest-algorithm
+\bibitem{AZ}
+Adam Zagdański, wykłady data mining, Politechnika Wrocławska
+\bibitem{boosting_frwiki}
+https://pl.frwiki.wiki/wiki/Boosting
+\bibitem{skrzypcowy}
+https://miroslawmamczur.pl/005-wykres-skrzypcowy-violin-plot/
+\end{thebibliography}
+
+
+
+\end{document}
