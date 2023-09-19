@@ -1,9 +1,3 @@
-# %% Linki
-#zbiór danych:
-# https://www.kaggle.com/datasets/vinicius150987/titanic3    
-# https://www.openml.org/search?type=data&sort=runs&id=40945&status=active
-# https://www.tensorflow.org/datasets/catalog/titanic
-# https://data.world/nrippner/titanic-disaster-dataset
 
 # %% import pakietów i załadowanie zbioru danych
 
